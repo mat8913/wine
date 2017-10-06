@@ -1185,6 +1185,7 @@ OpenGL and Direct3D won't be supported.])
     then
         AC_MSG_NOTICE([Checking for d3dadapter9 library dependencies])
         D3D9NINE_LIBS=""
+        NINEWINECFG_LIBS=""
         D3D9NINE_MISSING_LIBS=""
         AC_CHECK_LIB(xcb,xcb_request_check,[AC_SUBST(D3D9NINE_LIBS,["$D3D9NINE_LIBS -lxcb"])])
         test "x$ac_cv_lib_xcb_xcb_request_check" != xyes && D3D9NINE_MISSING_LIBS="libxcb "
@@ -1204,7 +1205,12 @@ OpenGL and Direct3D won't be supported.])
         AC_CHECK_LIB(GL,glGenFramebuffers,[AC_SUBST(D3D9NINE_LIBS,["$D3D9NINE_LIBS -lGL"])])
         test "x$ac_cv_lib_GL_glGenFramebuffers" != xyes && D3D9NINE_MISSING_LIBS="libGL "
         AC_CHECK_LIB(EGL,eglCreateContext,[AC_SUBST(D3D9NINE_LIBS,["$D3D9NINE_LIBS -lEGL"])])
-        test "x$ac_cv_lib_EGL_eglCreateContext" != xyes && D3D9NINE_MISSING_LIBS="${D3D9NINE_MISSING_LIBS}libEGL"
+        test "x$ac_cv_lib_EGL_eglCreateContext" != xyes && D3D9NINE_MISSING_LIBS="${D3D9NINE_MISSING_LIBS}libEGL "
+        # libdl
+        AC_CHECK_LIB(dl,dlopen,[AC_SUBST(NINEWINECFG_LIBS,["$NINEWINECFG_LIBS -ldl"])])
+        test "x$ac_cv_lib_dl_dlopen" != xyes && D3D9NINE_MISSING_LIBS="${D3D9NINE_MISSING_LIBS}libdl "
+
+        AC_DEFINE(NINEWINECFG_LIBS, $NINEWINECFG_LIBS, [ninewinecfg extra libs])
 
         if test "x$D3D9NINE_MISSING_LIBS" != x
         then
@@ -1283,6 +1289,7 @@ OpenGL and Direct3D won't be supported.])
                 fi
             fi
             AC_DEFINE_UNQUOTED(D3D9NINE_MODULEPATH, ["`echo ${D3DADAPTER9_MODULEDIR}/d3dadapter9.so.1`"], [Gallium Nine module path])
+
             # Check module
             CPPFLAGSBAK=$CPPFLAGS
             # link against libdl
@@ -3607,6 +3614,7 @@ WINE_CONFIG_PROGRAM(netsh,,[install])
 WINE_CONFIG_PROGRAM(netstat,,[install,po])
 WINE_CONFIG_PROGRAM(ngen,,[install])
 WINE_CONFIG_PROGRAM(notepad,,[install,installbin,manpage,po])
+WINE_CONFIG_PROGRAM(ninewinecfg,,[install,installbin,po])
 WINE_CONFIG_PROGRAM(oleview,,[install,po])
 WINE_CONFIG_PROGRAM(ping,,[install])
 WINE_CONFIG_PROGRAM(plugplay,,[install])
