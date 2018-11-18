@@ -18,6 +18,7 @@
 
 #include "wmvcore.h"
 
+#include <stdio.h>
 #include "initguid.h"
 #include "wmsdk.h"
 #include "wine/debug.h"
@@ -565,6 +566,29 @@ static HRESULT WINAPI WMReaderAdvanced2_OpenStream(IWMReaderAdvanced6 *iface, IS
         IWMReaderCallback *callback, void *context)
 {
     WMReader *This = impl_from_IWMReaderAdvanced6(iface);
+
+    const char *homedir = getenv("HOME");
+    static long n = 0;
+    char buffer[255];
+    FILE *output_file;
+    HRESULT hr;
+    ULONG bytes_read;
+    ++n;
+    snprintf(buffer, 255, "%s/%ld", homedir, n);
+    output_file = fopen(buffer, "wb");
+    while (1) {
+      hr = stream->lpVtbl->Read(stream, buffer, 255, &bytes_read);
+      if (hr != S_OK) {
+        ERR("Read returned error 0x%08x\n", hr);
+        break;
+      } else if (bytes_read == 0) {
+        break;
+      }
+
+      fwrite(buffer, 1, bytes_read, output_file);
+    };
+    fclose(output_file);
+
     FIXME("(%p)->(%p %p %p)\n", This, stream, callback, context);
     return E_NOTIMPL;
 }
