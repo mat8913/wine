@@ -3237,4 +3237,6 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define ERROR_AUDITING_DISABLED                            _HRESULT_TYPEDEF_(0xC0090001)
 #define ERROR_ALL_SIDS_FILTERED                            _HRESULT_TYPEDEF_(0xC0090002)
 
+#define ASF_E_BUFFERTOOSMALL                               _HRESULT_TYPEDEF_(0xC00D07D1)
+
 #endif  /* __WINE_WINERROR_H */

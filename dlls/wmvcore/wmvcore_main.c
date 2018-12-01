@@ -66,6 +66,252 @@ HRESULT WINAPI WMCreateEditor(IWMMetadataEditor **editor)
 }
 
 typedef struct {
+    IWMStreamConfig IWMStreamConfig_iface;
+    IWMMediaProps IWMMediaProps_iface;
+    LONG ref;
+} WMStreamConfig;
+
+static inline WMStreamConfig *impl_from_IWMStreamConfig(IWMStreamConfig *iface)
+{
+    return CONTAINING_RECORD(iface, WMStreamConfig, IWMStreamConfig_iface);
+}
+
+static HRESULT WINAPI WMStreamConfig_QueryInterface(IWMStreamConfig *iface, REFIID riid, void **ppv)
+{
+    WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
+
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IWMStreamConfig_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMStreamConfig)) {
+        TRACE("(%p)->(IID_IWMStreamConfig %p)\n", This, ppv);
+        *ppv = &This->IWMStreamConfig_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMMediaProps)) {
+        TRACE("(%p)->(IID_IWMMediaProps %p)\n", This, ppv);
+        *ppv = &This->IWMMediaProps_iface;
+    }else {
+        *ppv = NULL;
+        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI WMStreamConfig_AddRef(IWMStreamConfig *iface)
+{
+    WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI WMStreamConfig_Release(IWMStreamConfig *iface)
+{
+    WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI WMStreamConfig_GetStreamType(IWMStreamConfig *iface, GUID *ret)
+{
+    WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMStreamConfig_GetStreamNumber(IWMStreamConfig *iface, WORD *ret)
+{
+    WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMStreamConfig_SetStreamNumber(IWMStreamConfig *iface, WORD wStreamNum)
+{
+    WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
+    FIXME("(%p)->(%d)\n", This, wStreamNum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMStreamConfig_GetStreamName(IWMStreamConfig *iface, WCHAR *pwszStreamName, WORD *pcchStreamName)
+{
+    WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
+    FIXME("(%p)->(%p %p)\n", This, pwszStreamName, pcchStreamName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMStreamConfig_SetStreamName(IWMStreamConfig *iface, LPCWSTR_WMSDK_TYPE_SAFE pwszStreamName)
+{
+    WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(pwszStreamName));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMStreamConfig_GetConnectionName(IWMStreamConfig *iface, WCHAR *pwszInputName, WORD *pcchInputName)
+{
+    WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
+    FIXME("(%p)->(%p %p)\n", This, pwszInputName, pcchInputName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMStreamConfig_SetConnectionName(IWMStreamConfig *iface, LPCWSTR_WMSDK_TYPE_SAFE pwszInputName)
+{
+    WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(pwszInputName));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMStreamConfig_GetBitrate(IWMStreamConfig *iface, DWORD *ret)
+{
+    WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMStreamConfig_SetBitrate(IWMStreamConfig *iface, DWORD pdwBitrate)
+{
+    WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
+    FIXME("(%p)->(%d)\n", This, pdwBitrate);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMStreamConfig_GetBufferWindow(IWMStreamConfig *iface, DWORD *ret)
+{
+    WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMStreamConfig_SetBufferWindow(IWMStreamConfig *iface, DWORD msBufferWindow)
+{
+    WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
+    FIXME("(%p)->(%d)\n", This, msBufferWindow);
+    return E_NOTIMPL;
+}
+
+static const IWMStreamConfigVtbl WMStreamConfigVtbl = {
+    WMStreamConfig_QueryInterface,
+    WMStreamConfig_AddRef,
+    WMStreamConfig_Release,
+    WMStreamConfig_GetStreamType,
+    WMStreamConfig_GetStreamNumber,
+    WMStreamConfig_SetStreamNumber,
+    WMStreamConfig_GetStreamName,
+    WMStreamConfig_SetStreamName,
+    WMStreamConfig_GetConnectionName,
+    WMStreamConfig_SetConnectionName,
+    WMStreamConfig_GetBitrate,
+    WMStreamConfig_SetBitrate,
+    WMStreamConfig_GetBufferWindow,
+    WMStreamConfig_SetBufferWindow
+};
+
+static inline WMStreamConfig *impl_from_IWMMediaProps(IWMMediaProps *iface)
+{
+    return CONTAINING_RECORD(iface, WMStreamConfig, IWMMediaProps_iface);
+}
+
+static HRESULT WINAPI WMMediaProps_QueryInterface(IWMMediaProps *iface, REFIID riid, void **ppv)
+{
+    WMStreamConfig *This = impl_from_IWMMediaProps(iface);
+
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IWMStreamConfig_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMStreamConfig)) {
+        TRACE("(%p)->(IID_IWMStreamConfig %p)\n", This, ppv);
+        *ppv = &This->IWMStreamConfig_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMMediaProps)) {
+        TRACE("(%p)->(IID_IWMMediaProps %p)\n", This, ppv);
+        *ppv = &This->IWMMediaProps_iface;
+    }else {
+        *ppv = NULL;
+        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI WMMediaProps_AddRef(IWMMediaProps *iface)
+{
+    WMStreamConfig *This = impl_from_IWMMediaProps(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI WMMediaProps_Release(IWMMediaProps *iface)
+{
+    WMStreamConfig *This = impl_from_IWMMediaProps(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI WMMediaProps_GetType(IWMMediaProps *iface, GUID *ret)
+{
+    WMStreamConfig *This = impl_from_IWMMediaProps(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMMediaProps_GetMediaType(IWMMediaProps *iface, WM_MEDIA_TYPE *pType, DWORD *pcbType)
+{
+    WMStreamConfig *This = impl_from_IWMMediaProps(iface);
+    FIXME("(%p)->(%p %p)\n", This, pType, pcbType);
+
+    if (!pcbType)
+        return E_INVALIDARG;
+
+    if (pType) {
+        if (*pcbType < sizeof(WM_MEDIA_TYPE))
+            return ASF_E_BUFFERTOOSMALL;
+
+        pType->cbFormat = 0;
+        pType->pbFormat = NULL;
+    } else {
+        *pcbType = sizeof(WM_MEDIA_TYPE);
+    }
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMMediaProps_SetMediaType(IWMMediaProps *iface, WM_MEDIA_TYPE *pType)
+{
+    WMStreamConfig *This = impl_from_IWMMediaProps(iface);
+    FIXME("(%p)->(%p)\n", This, pType);
+    return E_NOTIMPL;
+}
+
+static const IWMMediaPropsVtbl WMMediaPropsVtbl = {
+    WMMediaProps_QueryInterface,
+    WMMediaProps_AddRef,
+    WMMediaProps_Release,
+    WMMediaProps_GetType,
+    WMMediaProps_GetMediaType,
+    WMMediaProps_SetMediaType
+};
+
+typedef struct {
     IWMReader IWMReader_iface;
     IWMReaderAdvanced6 IWMReaderAdvanced6_iface;
     IWMReaderAccelerator IWMReaderAccelerator_iface;
@@ -567,30 +813,10 @@ static HRESULT WINAPI WMReaderAdvanced2_OpenStream(IWMReaderAdvanced6 *iface, IS
 {
     WMReader *This = impl_from_IWMReaderAdvanced6(iface);
 
-    const char *homedir = getenv("HOME");
-    static long n = 0;
-    char buffer[255];
-    FILE *output_file;
-    HRESULT hr;
-    ULONG bytes_read;
-    ++n;
-    snprintf(buffer, 255, "%s/%ld", homedir, n);
-    output_file = fopen(buffer, "wb");
-    while (1) {
-      hr = stream->lpVtbl->Read(stream, buffer, 255, &bytes_read);
-      if (hr != S_OK) {
-        ERR("Read returned error 0x%08x\n", hr);
-        break;
-      } else if (bytes_read == 0) {
-        break;
-      }
-
-      fwrite(buffer, 1, bytes_read, output_file);
-    };
-    fclose(output_file);
+    callback->lpVtbl->OnStatus(callback, WMT_OPENED, S_OK, 0, NULL, context);
 
     FIXME("(%p)->(%p %p %p)\n", This, stream, callback, context);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMReaderAdvanced3_StopNetStreaming(IWMReaderAdvanced6 *iface)
@@ -1815,14 +2041,27 @@ static HRESULT WINAPI profile3_GetStreamCount(IWMProfile3 *iface, DWORD *count)
 {
     WMReader *This = impl_from_IWMProfile3(iface);
     FIXME("%p, %p\n", This, count);
-    return E_NOTIMPL;
+    *count = 2;
+    return S_OK;
 }
 
-static HRESULT WINAPI profile3_GetStream(IWMProfile3 *iface, DWORD index, IWMStreamConfig **config)
+static HRESULT WINAPI profile3_GetStream(IWMProfile3 *iface, DWORD index, IWMStreamConfig **ret_config)
 {
     WMReader *This = impl_from_IWMProfile3(iface);
-    FIXME("%p, %d, %p\n", This, index, config);
-    return E_NOTIMPL;
+    WMStreamConfig *config;
+
+    FIXME("%p, %d, %p\n", This, index, ret_config);
+
+    config = heap_alloc(sizeof(*config));
+    if(!config)
+        return E_OUTOFMEMORY;
+
+    config->IWMStreamConfig_iface.lpVtbl = &WMStreamConfigVtbl;
+    config->IWMMediaProps_iface.lpVtbl = &WMMediaPropsVtbl;
+    config->ref = 1;
+
+    *ret_config = &config->IWMStreamConfig_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI profile3_GetStreamByNumber(IWMProfile3 *iface, WORD stream, IWMStreamConfig **config)
