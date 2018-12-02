@@ -20,6 +20,27 @@ import "oaidl.idl";
 import "wmsbuffer.idl";
 import "drmexternals.idl";
 
+/* trick widl into thinking that it knows about BITMAPINFOHEADER
+ * as there is no IDL file for it (yet) */
+cpp_quote("#if 0")
+typedef struct
+{
+    DWORD 	biSize;
+    LONG  	biWidth;
+    LONG  	biHeight;
+    WORD 	biPlanes;
+    WORD 	biBitCount;
+    DWORD 	biCompression;
+    DWORD 	biSizeImage;
+    LONG  	biXPelsPerMeter;
+    LONG  	biYPelsPerMeter;
+    DWORD 	biClrUsed;
+    DWORD 	biClrImportant;
+} BITMAPINFOHEADER, *PBITMAPINFOHEADER, *LPBITMAPINFOHEADER;
+cpp_quote("#endif")
+
+cpp_quote("#include <wingdi.h>")
+
 typedef struct _WMMediaType
 {
     GUID majortype;
@@ -216,6 +237,16 @@ typedef struct _WM_PORT_NUMBER_RANGE
     WORD wPortBegin;
     WORD wPortEnd;
 } WM_PORT_NUMBER_RANGE;
+
+typedef struct _WMVIDEOINFOHEADER
+{
+    RECT rcSource;
+    RECT rcTarget;
+    DWORD dwBitRate;
+    DWORD dwBitErrorRate;
+    LONGLONG AvgTimePerFrame;
+    BITMAPINFOHEADER bmiHeader;
+} WMVIDEOINFOHEADER;
 
 typedef LPCWSTR LPCWSTR_WMSDK_TYPE_SAFE;
 
@@ -1828,3 +1859,4 @@ cpp_quote("EXTERN_GUID(WMMEDIASUBTYPE_WMVP,   0x50564d57,0x0000,0x0010,0x80,0x00
 cpp_quote("EXTERN_GUID(WMMEDIASUBTYPE_WVP2,   0x32505657,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);")
 cpp_quote("EXTERN_GUID(WMMEDIASUBTYPE_WMVA,   0x41564d57,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);")
 cpp_quote("EXTERN_GUID(WMMEDIASUBTYPE_WVC1,   0x31435657,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);")
+cpp_quote("EXTERN_GUID(WMFORMAT_VideoInfo,    0x05589f80,0xc356,0x11ce,0xbf,0x01,0x00,0xaa,0x00,0x55,0x59,0x5a);")

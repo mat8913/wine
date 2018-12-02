@@ -68,6 +68,8 @@ HRESULT WINAPI WMCreateEditor(IWMMetadataEditor **editor)
 typedef struct {
     IWMStreamConfig IWMStreamConfig_iface;
     IWMMediaProps IWMMediaProps_iface;
+    WORD streamNum;
+    WM_MEDIA_TYPE mediaType;
     LONG ref;
 } WMStreamConfig;
 
@@ -116,8 +118,9 @@ static ULONG WINAPI WMStreamConfig_Release(IWMStreamConfig *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
         heap_free(This);
+    }
 
     return ref;
 }
@@ -132,8 +135,10 @@ static HRESULT WINAPI WMStreamConfig_GetStreamType(IWMStreamConfig *iface, GUID 
 static HRESULT WINAPI WMStreamConfig_GetStreamNumber(IWMStreamConfig *iface, WORD *ret)
 {
     WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
-    FIXME("(%p)->(%p)\n", This, ret);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, ret);
+
+    *ret = This->streamNum;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMStreamConfig_SetStreamNumber(IWMStreamConfig *iface, WORD wStreamNum)
@@ -147,7 +152,20 @@ static HRESULT WINAPI WMStreamConfig_GetStreamName(IWMStreamConfig *iface, WCHAR
 {
     WMStreamConfig *This = impl_from_IWMStreamConfig(iface);
     FIXME("(%p)->(%p %p)\n", This, pwszStreamName, pcchStreamName);
-    return E_NOTIMPL;
+
+    if(!pcchStreamName)
+        return E_INVALIDARG;
+
+    if(pwszStreamName) {
+        if (*pcchStreamName < 1)
+            return ASF_E_BUFFERTOOSMALL;
+
+        pwszStreamName[0] = 0;
+    } else {
+        *pcchStreamName = 1;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WMStreamConfig_SetStreamName(IWMStreamConfig *iface, LPCWSTR_WMSDK_TYPE_SAFE pwszStreamName)
@@ -277,22 +295,25 @@ static HRESULT WINAPI WMMediaProps_GetType(IWMMediaProps *iface, GUID *ret)
 static HRESULT WINAPI WMMediaProps_GetMediaType(IWMMediaProps *iface, WM_MEDIA_TYPE *pType, DWORD *pcbType)
 {
     WMStreamConfig *This = impl_from_IWMMediaProps(iface);
-    FIXME("(%p)->(%p %p)\n", This, pType, pcbType);
+    const DWORD requiredSize = sizeof(WM_MEDIA_TYPE) + This->mediaType.cbFormat;
+
+    TRACE("(%p)->(%p %p)\n", This, pType, pcbType);
 
     if (!pcbType)
         return E_INVALIDARG;
 
     if (pType) {
-        if (*pcbType < sizeof(WM_MEDIA_TYPE))
+        if (*pcbType < requiredSize)
             return ASF_E_BUFFERTOOSMALL;
 
-        pType->cbFormat = 0;
-        pType->pbFormat = NULL;
+        *pType = This->mediaType;
+        pType->pbFormat = (BYTE*)(pType + 1);
+        memcpy(pType->pbFormat, This->mediaType.pbFormat, This->mediaType.cbFormat);
     } else {
-        *pcbType = sizeof(WM_MEDIA_TYPE);
+        *pcbType = requiredSize;
     }
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMMediaProps_SetMediaType(IWMMediaProps *iface, WM_MEDIA_TYPE *pType)
@@ -610,7 +631,9 @@ static HRESULT WINAPI WMReaderAdvanced_GetStreamSelected(IWMReaderAdvanced6 *ifa
 {
     WMReader *This = impl_from_IWMReaderAdvanced6(iface);
     FIXME("(%p)->(%d %p)\n", This, stream_num, selection);
-    return E_NOTIMPL;
+
+    *selection = WMT_ON;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMReaderAdvanced_SetReceiveSelectionCallbacks(IWMReaderAdvanced6 *iface, BOOL get_callbacks)
@@ -696,7 +719,17 @@ static HRESULT WINAPI WMReaderAdvanced_GetMaxStreamSampleSize(IWMReaderAdvanced6
 {
     WMReader *This = impl_from_IWMReaderAdvanced6(iface);
     FIXME("(%p)->(%d %p)\n", This, stream, max);
-    return E_NOTIMPL;
+
+    switch (stream) {
+    case 1:
+        *max = 2764800;
+        return S_OK;
+    case 2:
+        *max = 682;
+        return S_OK;
+    default:
+        return E_INVALIDARG;
+    }
 }
 
 static HRESULT WINAPI WMReaderAdvanced_NotifyLateDelivery(IWMReaderAdvanced6 *iface, QWORD lateness)
@@ -2041,7 +2074,7 @@ static HRESULT WINAPI profile3_GetStreamCount(IWMProfile3 *iface, DWORD *count)
 {
     WMReader *This = impl_from_IWMProfile3(iface);
     FIXME("%p, %p\n", This, count);
-    *count = 2;
+    *count = 1;
     return S_OK;
 }
 
@@ -2049,19 +2082,60 @@ static HRESULT WINAPI profile3_GetStream(IWMProfile3 *iface, DWORD index, IWMStr
 {
     WMReader *This = impl_from_IWMProfile3(iface);
     WMStreamConfig *config;
+    WMVIDEOINFOHEADER *info;
 
     FIXME("%p, %d, %p\n", This, index, ret_config);
 
-    config = heap_alloc(sizeof(*config));
-    if(!config)
-        return E_OUTOFMEMORY;
+    switch (index) {
+    case 0:
+        config = heap_alloc(sizeof(*config) + 92);
+        if(!config)
+            return E_OUTOFMEMORY;
 
-    config->IWMStreamConfig_iface.lpVtbl = &WMStreamConfigVtbl;
-    config->IWMMediaProps_iface.lpVtbl = &WMMediaPropsVtbl;
-    config->ref = 1;
+        config->IWMStreamConfig_iface.lpVtbl = &WMStreamConfigVtbl;
+        config->IWMMediaProps_iface.lpVtbl = &WMMediaPropsVtbl;
+        config->streamNum = 1;
+        config->mediaType.majortype = WMMEDIATYPE_Video;
+        config->mediaType.subtype = WMMEDIASUBTYPE_WMV2;
+        config->mediaType.bFixedSizeSamples = FALSE;
+        config->mediaType.bTemporalCompression = TRUE;
+        config->mediaType.lSampleSize = 0;
+        config->mediaType.formattype = WMFORMAT_VideoInfo;
+        config->mediaType.pUnk = NULL;
+        config->mediaType.cbFormat = 92;
+        config->mediaType.pbFormat = (BYTE*)(config + 1);
+        config->ref = 1;
 
-    *ret_config = &config->IWMStreamConfig_iface;
-    return S_OK;
+        info = (WMVIDEOINFOHEADER*)config->mediaType.pbFormat;
+        info->rcSource.left = 0;
+        info->rcSource.top = 0;
+        info->rcSource.right = 1280;
+        info->rcSource.bottom = 720;
+        info->rcTarget.left = 0;
+        info->rcTarget.top = 0;
+        info->rcTarget.right = 1280;
+        info->rcTarget.bottom = 720;
+        info->dwBitRate = 189464;
+        info->dwBitErrorRate = 0;
+        info->AvgTimePerFrame = 0;
+
+        info->bmiHeader.biSize = 40;
+        info->bmiHeader.biWidth = 1280;
+        info->bmiHeader.biHeight = 720;
+        info->bmiHeader.biPlanes = 1;
+        info->bmiHeader.biBitCount = 24;
+        info->bmiHeader.biCompression = 0;
+        info->bmiHeader.biSizeImage = 0;
+        info->bmiHeader.biXPelsPerMeter = 0;
+        info->bmiHeader.biYPelsPerMeter = 0;
+        info->bmiHeader.biClrUsed = 0;
+        info->bmiHeader.biClrImportant = 0;
+
+        *ret_config = &config->IWMStreamConfig_iface;
+        return S_OK;
+    default:
+        return E_INVALIDARG;
+    }
 }
 
 static HRESULT WINAPI profile3_GetStreamByNumber(IWMProfile3 *iface, WORD stream, IWMStreamConfig **config)
