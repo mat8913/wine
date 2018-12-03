@@ -242,47 +242,19 @@ static inline WMStreamConfig *impl_from_IWMMediaProps(IWMMediaProps *iface)
 static HRESULT WINAPI WMMediaProps_QueryInterface(IWMMediaProps *iface, REFIID riid, void **ppv)
 {
     WMStreamConfig *This = impl_from_IWMMediaProps(iface);
-
-    if(IsEqualGUID(riid, &IID_IUnknown)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IWMStreamConfig_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMStreamConfig)) {
-        TRACE("(%p)->(IID_IWMStreamConfig %p)\n", This, ppv);
-        *ppv = &This->IWMStreamConfig_iface;
-    }else if(IsEqualGUID(riid, &IID_IWMMediaProps)) {
-        TRACE("(%p)->(IID_IWMMediaProps %p)\n", This, ppv);
-        *ppv = &This->IWMMediaProps_iface;
-    }else {
-        *ppv = NULL;
-        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return IWMStreamConfig_QueryInterface(&This->IWMStreamConfig_iface, riid, ppv);
 }
 
 static ULONG WINAPI WMMediaProps_AddRef(IWMMediaProps *iface)
 {
     WMStreamConfig *This = impl_from_IWMMediaProps(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    return ref;
+    return IWMStreamConfig_AddRef(&This->IWMStreamConfig_iface);
 }
 
 static ULONG WINAPI WMMediaProps_Release(IWMMediaProps *iface)
 {
     WMStreamConfig *This = impl_from_IWMMediaProps(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    if(!ref)
-        heap_free(This);
-
-    return ref;
+    return IWMStreamConfig_Release(&This->IWMStreamConfig_iface);
 }
 
 static HRESULT WINAPI WMMediaProps_GetType(IWMMediaProps *iface, GUID *ret)
