@@ -319,6 +319,7 @@ typedef struct {
     IWMProfile3 IWMProfile3_iface;
     IWMPacketSize2 IWMPacketSize2_iface;
     IWMReaderCallback *callback;
+    IWMReaderCallbackAdvanced *callbackAdvanced;
     LONG ref;
 } WMReader;
 
@@ -434,7 +435,7 @@ static ULONG WINAPI WMReader_Release(IWMReader *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        iface->lpVtbl->Close(iface);
+        IWMReader_Close(iface);
         heap_free(This);
     }
 
@@ -454,7 +455,10 @@ static HRESULT WINAPI WMReader_Close(IWMReader *iface)
     FIXME("(%p)\n", This);
 
     if(This->callback)
-        This->callback->lpVtbl->Release(This->callback);
+        IUnknown_Release(This->callback);
+
+    if(This->callbackAdvanced)
+        IUnknown_Release(This->callbackAdvanced);
 
     return E_NOTIMPL;
 }
@@ -834,11 +838,16 @@ static HRESULT WINAPI WMReaderAdvanced2_OpenStream(IWMReaderAdvanced6 *iface, IS
         IWMReaderCallback *callback, void *context)
 {
     WMReader *This = impl_from_IWMReaderAdvanced6(iface);
-
-    This->callback = callback;
-    callback->lpVtbl->OnStatus(callback, WMT_OPENED, S_OK, 0, NULL, context);
-
     FIXME("(%p)->(%p %p %p)\n", This, stream, callback, context);
+
+    IWMReader_Close(&This->IWMReader_iface);
+
+    IUnknown_AddRef(callback);
+    This->callback = callback;
+    IUnknown_QueryInterface(callback, &IID_IWMReaderCallbackAdvanced, (void**)&This->callbackAdvanced);
+
+    IWMReaderCallback_OnStatus(callback, WMT_OPENED, S_OK, 0, NULL, context);
+
     return S_OK;
 }
 
@@ -2428,6 +2437,7 @@ HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_
     reader->IWMProfile3_iface.lpVtbl = &WMProfile3Vtbl;
     reader->IWMPacketSize2_iface.lpVtbl = &WMPacketSize2Vtbl;
     reader->callback = NULL;
+    reader->callbackAdvanced = NULL;
     reader->ref = 1;
 
     *ret_reader = &reader->IWMReader_iface;

@@ -285,6 +285,50 @@ interface IWMReaderCallback : IWMStatusCallback
 
 [
     object,
+    uuid(96406beb-2b2b-11d3-b36b-00c04f6108ff),
+    pointer_default(unique),
+    local
+]
+interface IWMReaderCallbackAdvanced : IUnknown
+{
+    HRESULT OnStreamSample(
+        [in] WORD wStreamNum,
+        [in] QWORD cnsSampleTime,
+        [in] QWORD cnsSampleDuration,
+        [in] DWORD dwFlags,
+        [in] INSSBuffer *pSample,
+        [in] void *pvContext);
+
+    HRESULT OnTime(
+        [in] QWORD cnsCurrentTime,
+        [in] void *pvContext);
+
+    HRESULT OnStreamSelection(
+        [in] WORD wStreamCount,
+        [in] WORD *pStreamNumbers,
+        [in] WMT_STREAM_SELECTION *pSelections,
+        [in] void *pvContext);
+
+    HRESULT OnOutputPropsChanged(
+        [in] DWORD dwOutputNum,
+        [in] WM_MEDIA_TYPE *pMediaType,
+        [in] void *pvContext);
+
+    HRESULT AllocateForStream(
+        [in] WORD wStreamNum,
+        [in] DWORD cbBuffer,
+        [out] INSSBuffer **ppBuffer,
+        [in] void *pvContext);
+
+    HRESULT AllocateForOutput(
+        [in] DWORD dwOutputNum,
+        [in] DWORD cbBuffer,
+        [out] INSSBuffer **ppBuffer,
+        [in] void *pvContext);
+}
+
+[
+    object,
     uuid(96406Bdd-2b2b-11d3-b36b-00c04f6108ff),
     pointer_default(unique),
     local
