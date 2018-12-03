@@ -346,6 +346,7 @@ typedef struct {
     IReferenceClock IReferenceClock_iface;
     IWMProfile3 IWMProfile3_iface;
     IWMPacketSize2 IWMPacketSize2_iface;
+    IWMReaderCallback *callback;
     LONG ref;
 } WMReader;
 
@@ -460,8 +461,10 @@ static ULONG WINAPI WMReader_Release(IWMReader *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        iface->lpVtbl->Close(iface);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -477,6 +480,10 @@ static HRESULT WINAPI WMReader_Close(IWMReader *iface)
 {
     WMReader *This = impl_from_IWMReader(iface);
     FIXME("(%p)\n", This);
+
+    if(This->callback)
+        This->callback->lpVtbl->Release(This->callback);
+
     return E_NOTIMPL;
 }
 
@@ -519,7 +526,16 @@ static HRESULT WINAPI WMReader_Start(IWMReader *iface, QWORD start, QWORD durati
 {
     WMReader *This = impl_from_IWMReader(iface);
     FIXME("(%p)->(%s %s %f %p)\n", This, wine_dbgstr_longlong(start), wine_dbgstr_longlong(duration), rate, context);
-    return E_NOTIMPL;
+
+    if(!This->callback) {
+        WARN("No callback\n");
+        return E_UNEXPECTED;
+    }
+
+    This->callback->lpVtbl->OnStatus(This->callback, WMT_STARTED, S_OK, 0, NULL, context);
+    This->callback->lpVtbl->OnStatus(This->callback, WMT_EOF, S_OK, 0, NULL, context);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WMReader_Stop(IWMReader *iface)
@@ -728,6 +744,7 @@ static HRESULT WINAPI WMReaderAdvanced_GetMaxStreamSampleSize(IWMReaderAdvanced6
         *max = 682;
         return S_OK;
     default:
+        WARN("But we didn't\n");
         return E_INVALIDARG;
     }
 }
@@ -846,6 +863,7 @@ static HRESULT WINAPI WMReaderAdvanced2_OpenStream(IWMReaderAdvanced6 *iface, IS
 {
     WMReader *This = impl_from_IWMReaderAdvanced6(iface);
 
+    This->callback = callback;
     callback->lpVtbl->OnStatus(callback, WMT_OPENED, S_OK, 0, NULL, context);
 
     FIXME("(%p)->(%p %p %p)\n", This, stream, callback, context);
@@ -1713,7 +1731,15 @@ static HRESULT WINAPI headerinfo_GetAttributeByName(IWMHeaderInfo3 *iface, WORD 
         WMT_ATTR_DATATYPE *type, BYTE *value, WORD *length)
 {
     WMReader *This = impl_from_IWMHeaderInfo3(iface);
+    static const WCHAR durationW[] = {'D','u','r','a','t','i','o','n',0};
     FIXME("%p, %p, %s, %p, %p, %p\n", This, stream_num, debugstr_w(name), type, value, length);
+
+    if (lstrcmpW(durationW, name) == 0) {
+        *((QWORD*)value) = 7183000;
+        return S_OK;
+    }
+
+    WARN("Didn't");
     return E_NOTIMPL;
 }
 
@@ -2429,6 +2455,7 @@ HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_
     reader->IReferenceClock_iface.lpVtbl = &ReferenceClockVtbl;
     reader->IWMProfile3_iface.lpVtbl = &WMProfile3Vtbl;
     reader->IWMPacketSize2_iface.lpVtbl = &WMPacketSize2Vtbl;
+    reader->callback = NULL;
     reader->ref = 1;
 
     *ret_reader = &reader->IWMReader_iface;
