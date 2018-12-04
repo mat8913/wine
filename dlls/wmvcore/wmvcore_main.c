@@ -320,6 +320,7 @@ typedef struct {
     IWMPacketSize2 IWMPacketSize2_iface;
     IWMReaderCallback *callback;
     IWMReaderCallbackAdvanced *callbackAdvanced;
+    QWORD time;
     LONG ref;
 } WMReader;
 
@@ -454,13 +455,17 @@ static HRESULT WINAPI WMReader_Close(IWMReader *iface)
     WMReader *This = impl_from_IWMReader(iface);
     FIXME("(%p)\n", This);
 
-    if(This->callback)
+    if(This->callback) {
         IUnknown_Release(This->callback);
+        This->callback = NULL;
+    }
 
-    if(This->callbackAdvanced)
+    if(This->callbackAdvanced) {
         IUnknown_Release(This->callbackAdvanced);
+        This->callbackAdvanced = NULL;
+    }
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMReader_GetOutputCount(IWMReader *iface, DWORD *outputs)
@@ -509,7 +514,6 @@ static HRESULT WINAPI WMReader_Start(IWMReader *iface, QWORD start, QWORD durati
     }
 
     This->callback->lpVtbl->OnStatus(This->callback, WMT_STARTED, S_OK, 0, NULL, context);
-    This->callback->lpVtbl->OnStatus(This->callback, WMT_EOF, S_OK, 0, NULL, context);
 
     return S_OK;
 }
@@ -589,11 +593,29 @@ static HRESULT WINAPI WMReaderAdvanced_GetUserProvidedClock(IWMReaderAdvanced6 *
     return E_NOTIMPL;
 }
 
+static DWORD WINAPI callOnTime(LPVOID lpParam)
+{
+    WMReader *This = lpParam;
+    TRACE("(%p)->(%s)\n", This, wine_dbgstr_longlong(This->time));
+    // TODO: Use same context as given to Start method
+    IWMReaderCallbackAdvanced_OnTime(This->callbackAdvanced, This->time, NULL);
+    return 0;
+}
+
 static HRESULT WINAPI WMReaderAdvanced_DeliverTime(IWMReaderAdvanced6 *iface, QWORD time)
 {
     WMReader *This = impl_from_IWMReaderAdvanced6(iface);
     FIXME("(%p)->(%s)\n", This, wine_dbgstr_longlong(time));
-    return E_NOTIMPL;
+
+    if(This->callbackAdvanced) {
+        This->time = time;
+        CreateThread(NULL, 0, callOnTime, This, 0, NULL);
+    }
+    if(time >= 7183000 && This->callback) {
+        // TODO: Use same context as given to Start method
+        IWMReaderCallback_OnStatus(This->callback, WMT_EOF, S_OK, 0, NULL, NULL);
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI WMReaderAdvanced_SetManualStreamSelection(IWMReaderAdvanced6 *iface, BOOL selection)
