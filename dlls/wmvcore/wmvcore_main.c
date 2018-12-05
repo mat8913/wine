@@ -583,7 +583,7 @@ static HRESULT WINAPI WMReaderAdvanced_SetUserProvidedClock(IWMReaderAdvanced6 *
 {
     WMReader *This = impl_from_IWMReaderAdvanced6(iface);
     FIXME("(%p)->(%x)\n", This, user_clock);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMReaderAdvanced_GetUserProvidedClock(IWMReaderAdvanced6 *iface, BOOL *user_clock)
