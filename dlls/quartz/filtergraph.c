@@ -1555,6 +1555,16 @@ static HRESULT WINAPI FilterGraph2_RenderFile(IFilterGraph2 *iface, LPCWSTR lpcw
             {
                 INT i;
 
+                IEnumMediaTypes *pinEnum;
+                AM_MEDIA_TYPE *mt;
+                IPin_EnumMediaTypes(ppinreader, &pinEnum);
+                TRACE("Output media types:\n");
+                while (hr = IEnumMediaTypes_Next(pinEnum, 1, &mt, NULL), SUCCEEDED(hr)) {
+                    TRACE("Media type: %s %s\n", debugstr_guid(&mt->majortype), debugstr_guid(&mt->subtype));
+                    DeleteMediaType(mt);
+                }
+                IUnknown_Release(pinEnum);
+
                 hr = IFilterGraph2_Render(iface, ppinreader);
                 TRACE("Render %08x\n", hr);
 
